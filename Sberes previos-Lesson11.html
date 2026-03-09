@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Desafío Programación y Electrónica</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+margin:0;
+padding:20px;
+}
+
+h1{
+text-align:center;
+color:#1b3c6b;
+}
+
+.timer{
+text-align:center;
+font-size:18px;
+margin-bottom:10px;
+color:#1b3c6b;
+}
+
+.progress-container{
+width:80%;
+height:20px;
+background:#d6e4ff;
+margin:auto;
+border-radius:20px;
+overflow:hidden;
+margin-bottom:20px;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:#2f5ea8;
+transition:width .4s ease;
+}
+
+.container{
+display:flex;
+justify-content:space-between;
+max-width:1100px;
+margin:auto;
+gap:20px;
+}
+
+.column{
+width:48%;
+}
+
+.item{
+background:#2f5ea8;
+color:white;
+padding:10px;
+margin:8px;
+border-radius:8px;
+cursor:grab;
+display:flex;
+align-items:center;
+gap:10px;
+font-size:18px;
+transition:transform .2s ease;
+}
+
+.item:hover{
+transform:scale(1.05);
+}
+
+.icon{
+font-size:26px;
+}
+
+.target{
+background:white;
+border:2px dashed #2f5ea8;
+padding:10px;
+margin:8px;
+border-radius:8px;
+min-height:50px;
+}
+
+.correct{
+background:#c8e6c9;
+border-color:#2e7d32;
+}
+
+.wrong{
+background:#ffcdd2;
+border-color:#c62828;
+}
+
+button{
+display:block;
+margin:auto;
+margin-top:20px;
+padding:12px 25px;
+font-size:16px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+#finalScreen{
+display:none;
+text-align:center;
+margin-top:30px;
+}
+
+.badge{
+font-size:60px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Une los conceptos de Programación</h1>
+
+<div class="timer">
+Tiempo: <span id="time">0</span> s
+</div>
+
+<div class="progress-container">
+<div class="progress-bar" id="progress"></div>
+</div>
+
+<div class="container">
+
+<div class="column" id="concepts"></div>
+<div class="column" id="definitions"></div>
+
+</div>
+
+<button onclick="checkAnswers()">Finalizar desafío</button>
+
+<div id="finalScreen"></div>
+
+<script>
+
+const pairs = [
+
+["arduino","Placa programable para controlar dispositivos electrónicos","🔵"],
+
+["led","Diodo que emite luz cuando pasa corriente","💡"],
+
+["resistencia","Componente que limita la corriente eléctrica","📏"],
+
+["high","Nivel lógico de salida digital encendido (1)","🟢"],
+
+["low","Nivel lógico de salida digital apagado (0)","⚫"],
+
+["polaridad","Dirección correcta de conexión de un componente","➕"],
+
+["bucle","Instrucción que repite acciones continuamente","🔁"],
+
+["gnd","Referencia de tierra en un circuito","🌍"],
+
+["protoboard","Placa para prototipos sin soldar","🧩"],
+
+["mblock","Programación por bloques para Arduino","🧱"]
+
+]
+
+function shuffle(array){
+return array.sort(()=>Math.random()-0.5)
+}
+
+const shuffledConcepts = shuffle([...pairs])
+const shuffledDefinitions = shuffle([...pairs])
+
+const conceptsDiv = document.getElementById("concepts")
+const definitionsDiv = document.getElementById("definitions")
+
+shuffledConcepts.forEach(p=>{
+let div=document.createElement("div")
+div.className="item"
+div.draggable=true
+div.id=p[0]
+
+div.innerHTML=`<span class="icon">${p[2]}</span> ${p[0].toUpperCase()}`
+
+conceptsDiv.appendChild(div)
+})
+
+shuffledDefinitions.forEach(p=>{
+let div=document.createElement("div")
+div.className="target"
+div.dataset.match=p[0]
+div.innerText=p[1]
+definitionsDiv.appendChild(div)
+})
+
+let items=document.querySelectorAll(".item")
+let targets=document.querySelectorAll(".target")
+
+items.forEach(item=>{
+item.addEventListener("dragstart",e=>dragged=e.target)
+})
+
+targets.forEach(target=>{
+target.addEventListener("dragover",e=>e.preventDefault())
+target.addEventListener("drop",dropItem)
+})
+
+let dragged
+
+function dropItem(e){
+
+e.preventDefault()
+e.target.appendChild(dragged)
+updateProgress()
+
+}
+
+function updateProgress(){
+
+let total=targets.length
+let placed=0
+
+targets.forEach(t=>{
+if(t.querySelector(".item")) placed++
+})
+
+let percent=(placed/total)*100
+document.getElementById("progress").style.width=percent+"%"
+
+}
+
+let startTime=Date.now()
+
+let timer=setInterval(()=>{
+let seconds=Math.floor((Date.now()-startTime)/1000)
+document.getElementById("time").innerText=seconds
+},1000)
+
+function checkAnswers(){
+
+clearInterval(timer)
+
+let correct=0
+
+targets.forEach(target=>{
+
+let item=target.querySelector(".item")
+
+if(item){
+
+if(item.id===target.dataset.match){
+
+target.classList.add("correct")
+correct++
+
+}else{
+
+target.classList.add("wrong")
+
+}
+
+}
+
+})
+
+let time=document.getElementById("time").innerText
+
+let medal="🥉"
+let message="Buen intento"
+
+if(correct>=9){
+medal="🥇"
+message="¡Excelente!"
+}
+else if(correct>=7){
+medal="🥈"
+message="¡Muy bien!"
+}
+
+document.getElementById("finalScreen").style.display="block"
+
+document.getElementById("finalScreen").innerHTML=
+
+"<h2>Resultado final</h2>"+
+"<div class='badge'>"+medal+"</div>"+
+"<p>"+message+"</p>"+
+"<p>Correctas: "+correct+" / 10</p>"+
+"<p>Tiempo: "+time+" segundos</p>"
+
+}
+
+</script>
+
+</body>
+</html>
