@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Clasificación PRO</title>
+
+<style>
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.progress-container{
+width:80%;
+height:20px;
+background:#d6e4ff;
+margin:auto;
+border-radius:20px;
+overflow:hidden;
+margin-bottom:10px;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:#2f5ea8;
+transition:width .4s;
+}
+
+.container{
+display:flex;
+justify-content:center;
+gap:20px;
+}
+
+.box{
+width:250px;
+min-height:250px;
+border:2px dashed #2f5ea8;
+border-radius:10px;
+padding:10px;
+background:white;
+}
+
+.item{
+background:#2f5ea8;
+color:white;
+margin:5px;
+padding:8px;
+border-radius:6px;
+cursor:grab;
+transition:transform .2s;
+}
+
+.item:hover{transform:scale(1.05);}
+
+.correct{background:#4caf50;}
+.wrong{background:#f44336;}
+
+#feedback{
+margin-top:15px;
+font-size:18px;
+color:#1b3c6b;
+min-height:40px;
+}
+
+.timer{
+margin:10px;
+}
+
+button{
+margin-top:15px;
+padding:10px 20px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+#final{
+display:none;
+margin-top:20px;
+font-size:20px;
+}
+
+.badge{
+font-size:50px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Clasifica el sistema electrónico</h1>
+
+<div class="timer">Tiempo: <span id="time">0</span> s</div>
+
+<div class="progress-container">
+<div class="progress-bar" id="progress"></div>
+</div>
+
+<div class="container">
+
+<div class="box" data-type="entrada"><h3>Entrada</h3></div>
+<div class="box" data-type="proceso"><h3>Proceso</h3></div>
+<div class="box" data-type="salida"><h3>Salida</h3></div>
+
+</div>
+
+<div id="items"></div>
+
+<button onclick="evaluar()">Evaluar</button>
+
+<div id="feedback"></div>
+<div id="final"></div>
+
+<audio id="ok">
+<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_115b9b1c6f.mp3">
+</audio>
+
+<script>
+
+const data = [
+
+{word:"Sensores",type:"entrada",exp:"Captan información del entorno"},
+{word:"Pulsador",type:"entrada",exp:"Permite ingresar una señal manual"},
+{word:"Entrada digital",type:"entrada",exp:"Recibe valores HIGH o LOW"},
+
+{word:"Controlador",type:"proceso",exp:"Toma decisiones del sistema"},
+{word:"Programación",type:"proceso",exp:"Define el comportamiento del sistema"},
+{word:"Condición",type:"proceso",exp:"Permite tomar decisiones lógicas"},
+{word:"Estado lógico",type:"proceso",exp:"Define si es HIGH o LOW"},
+{word:"Pin",type:"proceso",exp:"Conecta entradas y salidas"},
+{word:"Resistencia",type:"proceso",exp:"Controla el flujo de corriente"},
+
+{word:"LED",type:"salida",exp:"Emite luz como respuesta"},
+{word:"Actuadores",type:"salida",exp:"Ejecutan acciones físicas"},
+{word:"Salida",type:"salida",exp:"Resultado del sistema"}
+
+]
+
+let itemsDiv=document.getElementById("items")
+
+data.sort(()=>Math.random()-0.5).forEach(d=>{
+let div=document.createElement("div")
+div.className="item"
+div.draggable=true
+div.innerText=d.word
+div.dataset.type=d.type
+div.dataset.exp=d.exp
+itemsDiv.appendChild(div)
+})
+
+let dragged
+
+document.querySelectorAll(".item").forEach(item=>{
+item.addEventListener("dragstart",e=>dragged=e.target)
+})
+
+document.querySelectorAll(".box").forEach(box=>{
+box.addEventListener("dragover",e=>e.preventDefault())
+box.addEventListener("drop",e=>{
+e.target.appendChild(dragged)
+updateProgress()
+})
+})
+
+function updateProgress(){
+let total=data.length
+let placed=document.querySelectorAll(".box .item").length
+let percent=(placed/total)*100
+document.getElementById("progress").style.width=percent+"%"
+}
+
+let startTime=Date.now()
+
+setInterval(()=>{
+document.getElementById("time").innerText=
+Math.floor((Date.now()-startTime)/1000)
+},1000)
+
+function evaluar(){
+
+let correct=0
+
+document.querySelectorAll(".item").forEach(item=>{
+
+let parent=item.parentElement.dataset.type
+
+if(parent===item.dataset.type){
+item.classList.add("correct")
+correct++
+
+document.getElementById("ok").play()
+
+document.getElementById("feedback").innerHTML=
+"<b>"+item.innerText+":</b> "+item.dataset.exp
+
+}else{
+item.classList.add("wrong")
+}
+
+})
+
+let nota=Math.round((correct/data.length)*20)
+
+let medal="🥉"
+if(nota>=18) medal="🥇"
+else if(nota>=14) medal="🥈"
+
+let time=document.getElementById("time").innerText
+
+document.getElementById("final").style.display="block"
+
+document.getElementById("final").innerHTML=
+"<h2>Resultado final</h2>"+
+"<div class='badge'>"+medal+"</div>"+
+"<p>Correctos: "+correct+" / "+data.length+"</p>"+
+"<p>Nota: "+nota+"/20</p>"+
+"<p>Tiempo: "+time+" s</p>"
+
+}
+
+</script>
+
+</body>
+</html>
