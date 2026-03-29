@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sistemas que reaccionan</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.progress-container{
+width:80%;
+height:20px;
+background:#d6e4ff;
+margin:auto;
+border-radius:20px;
+overflow:hidden;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:#2f5ea8;
+transition:.4s;
+}
+
+.system{
+display:flex;
+justify-content:center;
+gap:40px;
+margin:30px;
+}
+
+.box{
+padding:15px;
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+width:120px;
+}
+
+.led{
+width:40px;
+height:40px;
+border-radius:50%;
+background:#ccc;
+margin:auto;
+}
+
+.on{background:#4caf50;}
+
+.loop{
+margin-top:10px;
+font-size:14px;
+color:#1b3c6b;
+animation:blink 1s infinite;
+}
+
+@keyframes blink{
+0%{opacity:1}
+50%{opacity:.3}
+100%{opacity:1}
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:320px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.correct{background:#4caf50;}
+.wrong{background:#f44336;}
+
+#info{
+margin-top:15px;
+font-size:18px;
+color:#1b3c6b;
+min-height:40px;
+}
+
+#final{
+display:none;
+margin-top:20px;
+font-size:20px;
+}
+
+.badge{font-size:50px;}
+
+</style>
+</head>
+
+<body>
+
+<h1>Sistemas que reaccionan</h1>
+
+<div class="progress-container">
+<div class="progress-bar" id="progress"></div>
+</div>
+
+<div class="system">
+
+<div class="box">
+<p>Entrada</p>
+<button onclick="evento()">Pulsador</button>
+</div>
+
+<div class="box">
+<p>Controlador</p>
+<p class="loop">🔁 Esperando evento...</p>
+</div>
+
+<div class="box">
+<p>Salida</p>
+<div class="led" id="led"></div>
+</div>
+
+</div>
+
+<h3 id="nivel">Nivel 1</h3>
+
+<div id="question"></div>
+
+<div id="options"></div>
+
+<div id="info"></div>
+
+<div id="final"></div>
+
+<script>
+
+let preguntas = [
+
+{nivel:1,q:"¿Qué es un evento?",o:[
+"Algo que nunca ocurre",
+"Una acción detectada por el sistema",
+"Un error del programa"],c:1},
+
+{nivel:1,q:"¿Qué hace el sistema en el bucle?",o:[
+"Se apaga",
+"Espera constantemente eventos",
+"Solo ejecuta una vez"],c:1},
+
+{nivel:2,q:"¿Qué ocurre al presionar el botón?",o:[
+"No pasa nada",
+"Se genera una entrada digital",
+"Se apaga el sistema"],c:1},
+
+{nivel:2,q:"¿Qué hace la condición?",o:[
+"Decora el programa",
+"Permite tomar decisiones",
+"Apaga el LED"],c:1},
+
+{nivel:3,q:"¿Cómo responde el sistema?",o:[
+"Sin lógica",
+"Entrada → condición → salida",
+"Solo salida"],c:1},
+
+{nivel:3,q:"¿Qué podemos controlar además del LED?",o:[
+"Solo luces",
+"Salidas sonoras como buzzer",
+"Nada"],c:1}
+
+]
+
+let actual=0
+let puntos=0
+
+function cargar(){
+
+let p=preguntas[actual]
+
+document.getElementById("nivel").innerText="Nivel "+p.nivel
+document.getElementById("question").innerHTML="<h3>"+p.q+"</h3>"
+
+let html=""
+
+p.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="responder(${i})">${op}</div>`
+})
+
+document.getElementById("options").innerHTML=html
+
+actualizarBarra()
+
+}
+
+function responder(i){
+
+let p=preguntas[actual]
+
+if(i===p.c){
+puntos++
+document.getElementById("info").innerHTML="✅ Correcto"
+}else{
+document.getElementById("info").innerHTML="❌ Intenta otra vez"
+return
+}
+
+actual++
+
+if(actual<preguntas.length){
+cargar()
+}else{
+final()
+}
+
+}
+
+function actualizarBarra(){
+let percent=(actual/preguntas.length)*100
+document.getElementById("progress").style.width=percent+"%"
+}
+
+function evento(){
+document.getElementById("led").classList.toggle("on")
+}
+
+function final(){
+
+let medal="🥉"
+if(puntos>=5) medal="🥇"
+else if(puntos>=4) medal="🥈"
+
+document.getElementById("final").style.display="block"
+
+document.getElementById("final").innerHTML=
+
+"<h2>Resultado</h2>"+
+"<div class='badge'>"+medal+"</div>"+
+"<p>Puntos: "+puntos+" / "+preguntas.length+"</p>"+
+"<p>Ahora pasamos a controlar salidas sonoras 🔊</p>"
+
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>
