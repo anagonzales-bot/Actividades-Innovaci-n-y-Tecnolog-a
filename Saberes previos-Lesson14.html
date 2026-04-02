@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Detecto vs Registro</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.system{
+display:flex;
+justify-content:center;
+gap:30px;
+margin:20px;
+}
+
+.box{
+padding:15px;
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+width:130px;
+}
+
+.led{
+width:40px;
+height:40px;
+border-radius:50%;
+background:#ccc;
+margin:auto;
+}
+
+.on{background:#4caf50;}
+
+.counter{
+font-size:28px;
+color:#1b3c6b;
+}
+
+button{
+padding:10px 20px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.unir-container{
+display:flex;
+justify-content:center;
+gap:40px;
+margin-top:20px;
+}
+
+.col{
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.item{
+padding:10px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.selected{background:#90caf9;}
+.correct{background:#4caf50;}
+.wrong{background:#f44336;}
+
+#feedback{
+margin-top:15px;
+font-size:18px;
+min-height:30px;
+}
+
+#final{
+display:none;
+margin-top:20px;
+font-size:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Detecto vs Registro</h1>
+
+<p>Interactúa con el sistema</p>
+
+<div class="system">
+
+<div class="box">
+<p>Entrada</p>
+<button onclick="evento()">Pulsador</button>
+</div>
+
+<div class="box">
+<p>Registro</p>
+<div class="counter" id="contador">0</div>
+</div>
+
+<div class="box">
+<p>Salida</p>
+<div class="led" id="led"></div>
+</div>
+
+</div>
+
+<h3>Une los conceptos</h3>
+
+<div class="unir-container">
+
+<div class="col" id="left">
+<div class="item" data-match="boton">Entrada digital</div>
+<div class="item" data-match="evento">Evento</div>
+<div class="item" data-match="condicion">Condición</div>
+<div class="item" data-match="registro">Registro</div>
+</div>
+
+<div class="col" id="right">
+<div class="item" data-match="registro">Cuenta cuántas veces ocurre</div>
+<div class="item" data-match="boton">Pulsador</div>
+<div class="item" data-match="condicion">“Si presiona…”</div>
+<div class="item" data-match="evento">Acción detectada</div>
+</div>
+
+</div>
+
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+let contador=0
+
+function evento(){
+contador++
+document.getElementById("contador").innerText=contador
+
+document.getElementById("led").classList.add("on")
+setTimeout(()=>{document.getElementById("led").classList.remove("on")},200)
+}
+
+// lógica unir
+let selected=null
+let correctCount=0
+
+document.querySelectorAll(".item").forEach(item=>{
+item.addEventListener("click",()=>{
+
+if(!selected){
+selected=item
+item.classList.add("selected")
+}else{
+
+if(selected.dataset.match===item.dataset.match){
+
+selected.classList.add("correct")
+item.classList.add("correct")
+
+correctCount++
+
+document.getElementById("feedback").innerHTML="✅ Correcto"
+
+}else{
+
+selected.classList.add("wrong")
+item.classList.add("wrong")
+
+document.getElementById("feedback").innerHTML="❌ Intenta otra vez"
+
+setTimeout(()=>{
+selected.classList.remove("wrong")
+item.classList.remove("wrong")
+},500)
+}
+
+selected.classList.remove("selected")
+selected=null
+
+if(correctCount===4){
+final()
+}
+
+}
+
+})
+})
+
+function final(){
+
+document.getElementById("final").style.display="block"
+
+document.getElementById("final").innerHTML=
+"<h2>💡 Aprendizaje logrado</h2>"+
+"<p>Antes detectábamos eventos…</p>"+
+"<p><b>Ahora los registramos</b></p>"+
+"<p>Entrada → condición → registro → salida</p>"
+
+}
+
+</script>
+
+</body>
+</html>
