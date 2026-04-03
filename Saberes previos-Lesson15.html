@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Digital vs Analógico</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.container{
+display:flex;
+justify-content:center;
+gap:40px;
+margin:30px;
+flex-wrap:wrap;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+padding:15px;
+width:200px;
+}
+
+.led{
+width:40px;
+height:40px;
+border-radius:50%;
+background:#ccc;
+margin:auto;
+}
+
+.on{background:#4caf50;}
+
+.value{
+font-size:18px;
+color:#1b3c6b;
+margin-top:10px;
+}
+
+.bar{
+height:20px;
+background:#d6e4ff;
+border-radius:10px;
+margin-top:10px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+width:0%;
+background:#2f5ea8;
+transition:.2s;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:350px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+#feedback{
+margin-top:15px;
+font-size:18px;
+min-height:40px;
+}
+
+#final{
+display:none;
+margin-top:20px;
+font-size:20px;
+}
+
+button{
+padding:10px 15px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+@keyframes caer{
+to{
+transform:translateY(100vh);
+opacity:0;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Digital vs Analógico</h1>
+<p>Observa, interactúa y responde</p>
+
+<div class="container">
+
+<div class="box">
+<h3>Digital</h3>
+<button id="btn">Pulsar</button>
+<div class="value">Estado: <span id="digital">LOW</span></div>
+<div class="led" id="led"></div>
+</div>
+
+<div class="box">
+<h3>Analógico</h3>
+<input type="range" min="0" max="1023" value="0" id="slider">
+<div class="value">Valor: <span id="analog">0</span></div>
+<div class="bar"><div class="fill" id="fill"></div></div>
+</div>
+
+</div>
+
+<h3 id="pregunta"></h3>
+<div id="opciones"></div>
+
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+// ===== SIMULACIÓN =====
+let presionado=false
+
+btn.onmousedown=()=>presionado=true
+btn.onmouseup=()=>presionado=false
+
+setInterval(()=>{
+
+let estado=presionado?"HIGH":"LOW"
+digital.innerText=estado
+
+if(estado==="HIGH"){
+led.classList.add("on")
+}else{
+led.classList.remove("on")
+}
+
+let val=slider.value
+analog.innerText=val
+fill.style.width=(val/1023*100)+"%"
+
+},100)
+
+// ===== PREGUNTAS =====
+let preguntas=[
+{
+q:"¿Cuántos valores tiene una entrada digital?",
+o:["Muchos","Solo HIGH y LOW","Depende del sensor"],
+c:1,
+exp:"La entrada digital solo maneja dos estados: HIGH o LOW"
+},
+{
+q:"¿Qué tipo de lectura es el sensor analógico?",
+o:["Evento","Valor continuo","Solo HIGH"],
+c:1,
+exp:"El sensor analógico entrega múltiples valores (0–1023)"
+},
+{
+q:"¿Qué representa HIGH?",
+o:["Botón presionado","Sin energía","Error"],
+c:0,
+exp:"HIGH indica que hay señal"
+},
+{
+q:"¿Cuál es la diferencia principal?",
+o:["Ninguna","Digital = 2 valores / Analógico = muchos","Ambos iguales"],
+c:1,
+exp:"Esa es la diferencia fundamental"
+},
+{
+q:"¿Qué usa valores continuos?",
+o:["Sensor de luz","Botón","LED"],
+c:0,
+exp:"Los sensores usan valores continuos"
+}
+]
+
+let actual=0
+let puntos=0
+let bloqueado=false
+
+function cargar(){
+
+if(actual >= preguntas.length){
+mostrarFinal()
+return
+}
+
+let p=preguntas[actual]
+
+pregunta.innerText=p.q
+
+let html=""
+p.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="responder(${i})">${op}</div>`
+})
+
+opciones.innerHTML=html
+bloqueado=false
+
+}
+
+function responder(i){
+
+if(bloqueado) return
+bloqueado=true
+
+let p=preguntas[actual]
+
+// bloquear clics
+document.querySelectorAll(".option").forEach(op=>{
+op.style.pointerEvents="none"
+})
+
+// feedback
+if(i===p.c){
+puntos++
+feedback.innerHTML="✅ "+p.exp
+}else{
+feedback.innerHTML="❌ "+p.exp
+}
+
+// avanzar
+actual++
+
+// si es última → pasar directo a resultado
+if(actual >= preguntas.length){
+
+setTimeout(()=>{
+mostrarFinal()
+},800)
+
+return
+}
+
+// siguiente pregunta
+setTimeout(()=>{
+feedback.innerHTML=""
+cargar()
+},1000)
+
+}
+
+// ===== RESULTADO FINAL =====
+function mostrarFinal(){
+
+pregunta.innerText=""
+opciones.innerHTML=""
+feedback.innerHTML=""
+
+let nota=Math.round((puntos/preguntas.length)*20)
+
+let medalla="🥉"
+let mensaje="📘 Sigue practicando"
+let color="#cd7f32"
+
+if(nota>=18){
+medalla="🥇"
+mensaje="🏆 ¡Excelente dominio del tema!"
+color="#ffd700"
+}
+else if(nota>=14){
+medalla="🥈"
+mensaje="👍 Buen trabajo"
+color="#c0c0c0"
+}
+
+let ancho=(nota/20)*100
+
+final.style.display="block"
+
+final.innerHTML=
+"<h2>🎮 Resultado final</h2>"+
+"<div style='font-size:60px'>"+medalla+"</div>"+
+"<p><b>Puntaje:</b> "+puntos+" / "+preguntas.length+"</p>"+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<div style='width:80%;height:20px;background:#ddd;margin:auto;border-radius:10px'>"+
+"<div style='width:"+ancho+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>"
+
+// 🎉 celebración
+if(nota>=18){
+for(let i=0;i<30;i++){
+let c=document.createElement("div")
+c.innerText="🎉"
+c.style.position="fixed"
+c.style.left=Math.random()*100+"%"
+c.style.top="-20px"
+c.style.animation="caer 2s linear forwards"
+document.body.appendChild(c)
+}
+}
+
+}
+
+// iniciar
+cargar()
+
+</script>
+
+</body>
+</html>
