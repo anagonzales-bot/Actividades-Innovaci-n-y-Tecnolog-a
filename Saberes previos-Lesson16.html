@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Control de brillo (PWM)</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.container{
+display:flex;
+justify-content:center;
+gap:40px;
+margin:30px;
+flex-wrap:wrap;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+padding:15px;
+width:220px;
+}
+
+.led{
+width:60px;
+height:60px;
+border-radius:50%;
+background:rgb(0,0,0);
+margin:auto;
+transition:.2s;
+}
+
+.value{
+font-size:20px;
+color:#1b3c6b;
+margin-top:10px;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:350px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+#feedback{
+margin-top:15px;
+font-size:18px;
+min-height:40px;
+}
+
+#final{
+display:none;
+margin-top:20px;
+font-size:20px;
+}
+
+button{
+padding:10px 15px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+@keyframes caer{
+to{
+transform:translateY(100vh);
+opacity:0;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Del dato al control (PWM)</h1>
+
+<p>Mueve el potenciómetro y observa cómo cambia el brillo del LED</p>
+
+<div class="container">
+
+<div class="box">
+<h3>Entrada (Potenciómetro)</h3>
+<input type="range" min="0" max="4095" value="0" id="slider">
+<div class="value">Valor: <span id="valor">0</span></div>
+</div>
+
+<div class="box">
+<h3>Variable</h3>
+<div class="value" id="variable">0</div>
+</div>
+
+<div class="box">
+<h3>Salida (LED)</h3>
+<div class="led" id="led"></div>
+<p id="estadoLed">Intensidad: 0</p>
+</div>
+
+</div>
+
+<h3 id="pregunta"></h3>
+<div id="opciones"></div>
+
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+// ===== SIMULACIÓN PWM =====
+let slider=document.getElementById("slider")
+
+setInterval(()=>{
+
+let valor=parseInt(slider.value)
+
+document.getElementById("valor").innerText=valor
+document.getElementById("variable").innerText=valor
+
+// convertir a 0–255 (PWM)
+let intensidad=Math.floor(valor/4095*255)
+
+// color verde progresivo
+led.style.backgroundColor=`rgb(0,${intensidad},0)`
+
+// brillo tipo LED real
+led.style.boxShadow=`0 0 ${intensidad/4}px rgb(0,255,0)`
+
+estadoLed.innerText="Intensidad: "+intensidad
+
+},100)
+
+// ===== PREGUNTAS =====
+let preguntas=[
+{
+q:"¿Qué tipo de valores entrega el potenciómetro?",
+o:["Solo HIGH/LOW","Valores continuos (0–4095)","Solo 0"],
+c:1,
+exp:"El potenciómetro entrega valores analógicos continuos"
+},
+{
+q:"¿Qué hacemos con ese valor?",
+o:["Lo ignoramos","Lo guardamos en una variable","Lo borramos"],
+c:1,
+exp:"El valor se guarda en una variable"
+},
+{
+q:"¿Qué cambia ahora en el LED?",
+o:["Nada","El brillo","Solo encendido"],
+c:1,
+exp:"Ahora el LED cambia su intensidad (PWM)"
+},
+{
+q:"¿Qué representa la intensidad?",
+o:["Error","Cantidad de brillo","Voltaje negativo"],
+c:1,
+exp:"La intensidad indica qué tan fuerte brilla el LED"
+},
+{
+q:"¿Qué estamos haciendo ahora?",
+o:["Solo leer","Controlar proporcionalmente","Apagar todo"],
+c:1,
+exp:"Ahora usamos los datos para controlar el sistema"
+}
+]
+
+let actual=0
+let puntos=0
+let bloqueado=false
+
+function cargar(){
+
+if(actual>=preguntas.length){
+mostrarFinal()
+return
+}
+
+let p=preguntas[actual]
+pregunta.innerText=p.q
+
+let html=""
+p.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="responder(${i})">${op}</div>`
+})
+
+opciones.innerHTML=html
+bloqueado=false
+
+}
+
+function responder(i){
+
+if(bloqueado) return
+bloqueado=true
+
+let p=preguntas[actual]
+
+document.querySelectorAll(".option").forEach(op=>{
+op.style.pointerEvents="none"
+})
+
+if(i===p.c){
+puntos++
+feedback.innerHTML="✅ "+p.exp
+}else{
+feedback.innerHTML="❌ "+p.exp
+}
+
+actual++
+
+if(actual>=preguntas.length){
+setTimeout(mostrarFinal,800)
+return
+}
+
+setTimeout(()=>{
+feedback.innerHTML=""
+cargar()
+},1000)
+
+}
+
+// ===== FINAL =====
+function mostrarFinal(){
+
+pregunta.innerText=""
+opciones.innerHTML=""
+feedback.innerHTML=""
+
+let nota=Math.round((puntos/preguntas.length)*20)
+
+let medalla="🥉"
+let mensaje="Sigue practicando"
+let color="#cd7f32"
+
+if(nota>=18){
+medalla="🥇"
+mensaje="¡Excelente dominio!"
+color="#ffd700"
+}
+else if(nota>=14){
+medalla="🥈"
+mensaje="Buen trabajo"
+color="#c0c0c0"
+}
+
+let ancho=(nota/20)*100
+
+final.style.display="block"
+
+final.innerHTML=
+"<h2>🎮 Resultado final</h2>"+
+"<div style='font-size:60px'>"+medalla+"</div>"+
+"<p><b>Puntaje:</b> "+puntos+" / "+preguntas.length+"</p>"+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<div style='width:80%;height:20px;background:#ddd;margin:auto;border-radius:10px'>"+
+"<div style='width:"+ancho+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<p><b>💡 Antes leíamos datos… ahora controlamos intensidad (PWM)</b></p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>"
+
+// 🎉 confeti
+if(nota>=18){
+for(let i=0;i<30;i++){
+let c=document.createElement("div")
+c.innerText="🎉"
+c.style.position="fixed"
+c.style.left=Math.random()*100+"%"
+c.style.top="-20px"
+c.style.animation="caer 2s linear forwards"
+document.body.appendChild(c)
+}
+}
+
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>
