@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sistema automático con sensor</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.container{
+display:flex;
+justify-content:center;
+gap:40px;
+margin:30px;
+flex-wrap:wrap;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+padding:15px;
+width:230px;
+}
+
+.led{
+width:60px;
+height:60px;
+border-radius:50%;
+background:black;
+margin:auto;
+transition:.2s;
+}
+
+.value{
+font-size:20px;
+color:#1b3c6b;
+margin-top:10px;
+}
+
+.estado{
+font-weight:bold;
+margin-top:10px;
+color:#1b3c6b;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:350px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+#feedback{
+margin-top:15px;
+font-size:18px;
+min-height:40px;
+}
+
+#final{
+display:none;
+margin-top:20px;
+font-size:20px;
+}
+
+button{
+padding:10px 15px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+@keyframes caer{
+to{
+transform:translateY(100vh);
+opacity:0;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Sistema automático (sensor de luz)</h1>
+
+<p>Simula la luz del entorno y observa cómo el sistema reacciona</p>
+
+<div class="container">
+
+<div class="box">
+<h3>🌞 Luz del entorno (LDR)</h3>
+<input type="range" min="0" max="4095" value="2000" id="slider">
+<div class="value">Nivel de luz: <span id="valor">2000</span></div>
+</div>
+
+<div class="box">
+<h3>Variable</h3>
+<div class="value" id="variable">2000</div>
+</div>
+
+<div class="box">
+<h3>Salida automática (LED)</h3>
+<div class="led" id="led"></div>
+<div class="estado" id="estado">Esperando...</div>
+</div>
+
+</div>
+
+<h3 id="pregunta"></h3>
+<div id="opciones"></div>
+
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+// ===== SIMULACIÓN AUTOMÁTICA =====
+let slider=document.getElementById("slider")
+
+setInterval(()=>{
+
+let luz=parseInt(slider.value)
+
+valor.innerText=luz
+variable.innerText=luz
+
+let intensidad=0
+let estado=""
+
+// lógica tipo LDR real
+if(luz < 1500){
+intensidad = 255
+estado = "🌙 Oscuro → LED fuerte"
+}
+else if(luz < 3000){
+intensidad = 120
+estado = "🌤 Luz media → LED suave"
+}
+else{
+intensidad = 0
+estado = "☀️ Mucha luz → LED apagado"
+}
+
+// aplicar PWM
+led.style.backgroundColor=`rgb(0,${intensidad},0)`
+led.style.boxShadow=`0 0 ${intensidad/4}px rgb(0,255,0)`
+
+estado.innerText=estado
+
+},100)
+
+// ===== PREGUNTAS =====
+let preguntas=[
+{
+q:"¿Qué representa el slider en esta actividad?",
+o:["Un botón","Un sensor de luz (LDR)","Un LED"],
+c:1,
+exp:"Simula un sensor que detecta luz del entorno"
+},
+{
+q:"¿Qué tipo de dato entrega el sensor?",
+o:["Digital","Analógico","Texto"],
+c:1,
+exp:"Los sensores como el LDR entregan valores continuos"
+},
+{
+q:"¿Qué hace el sistema con ese dato?",
+o:["Lo ignora","Lo usa para decidir","Lo elimina"],
+c:1,
+exp:"El sistema analiza el dato para tomar decisiones"
+},
+{
+q:"¿Cuándo el LED se enciende más?",
+o:["Con mucha luz","En oscuridad","Nunca"],
+c:1,
+exp:"En la oscuridad el sistema activa el LED"
+},
+{
+q:"¿Qué estamos construyendo conceptualmente?",
+o:["Un juego","Un sistema automático","Un dibujo"],
+c:1,
+exp:"Un sistema que responde al entorno sin intervención"
+}
+]
+
+let actual=0
+let puntos=0
+let bloqueado=false
+
+function cargar(){
+
+if(actual>=preguntas.length){
+mostrarFinal()
+return
+}
+
+let p=preguntas[actual]
+pregunta.innerText=p.q
+
+let html=""
+p.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="responder(${i})">${op}</div>`
+})
+
+opciones.innerHTML=html
+bloqueado=false
+
+}
+
+function responder(i){
+
+if(bloqueado) return
+bloqueado=true
+
+let p=preguntas[actual]
+
+document.querySelectorAll(".option").forEach(op=>{
+op.style.pointerEvents="none"
+})
+
+if(i===p.c){
+puntos++
+feedback.innerHTML="✅ "+p.exp
+}else{
+feedback.innerHTML="❌ "+p.exp
+}
+
+actual++
+
+if(actual>=preguntas.length){
+setTimeout(mostrarFinal,800)
+return
+}
+
+setTimeout(()=>{
+feedback.innerHTML=""
+cargar()
+},1000)
+
+}
+
+// ===== FINAL =====
+function mostrarFinal(){
+
+pregunta.innerText=""
+opciones.innerHTML=""
+feedback.innerHTML=""
+
+let nota=Math.round((puntos/preguntas.length)*20)
+
+let medalla="🥉"
+let mensaje="Sigue practicando"
+let color="#cd7f32"
+
+if(nota>=18){
+medalla="🥇"
+mensaje="¡Listo para automatizar!"
+color="#ffd700"
+}
+else if(nota>=14){
+medalla="🥈"
+mensaje="Buen progreso"
+color="#c0c0c0"
+}
+
+let ancho=(nota/20)*100
+
+final.style.display="block"
+
+final.innerHTML=
+"<h2>🎮 Resultado final</h2>"+
+"<div style='font-size:60px'>"+medalla+"</div>"+
+"<p><b>Puntaje:</b> "+puntos+" / "+preguntas.length+"</p>"+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<div style='width:80%;height:20px;background:#ddd;margin:auto;border-radius:10px'>"+
+"<div style='width:"+ancho+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<p><b>💡 El sistema detecta el entorno… y actúa automáticamente</b></p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>"
+
+// confeti
+if(nota>=18){
+for(let i=0;i<30;i++){
+let c=document.createElement("div")
+c.innerText="🎉"
+c.style.position="fixed"
+c.style.left=Math.random()*100+"%"
+c.style.top="-20px"
+c.style.animation="caer 2s linear forwards"
+document.body.appendChild(c)
+}
+}
+
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>
