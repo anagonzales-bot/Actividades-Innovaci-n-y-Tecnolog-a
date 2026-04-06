@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Alarma automática por distancia</title>
+
+<style>
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.container{
+display:flex;
+justify-content:center;
+gap:40px;
+margin:30px;
+flex-wrap:wrap;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+padding:15px;
+width:230px;
+}
+
+.led{
+width:60px;
+height:60px;
+border-radius:50%;
+background:black;
+margin:auto;
+transition:.2s;
+}
+
+.alerta{
+font-size:20px;
+margin-top:10px;
+font-weight:bold;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:350px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+#feedback{min-height:40px;margin-top:10px;}
+#final{display:none;margin-top:20px;}
+
+button{
+padding:10px;
+background:#1b3c6b;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+@keyframes blink{
+0%{opacity:1}
+50%{opacity:0.3}
+100%{opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<h1>Sistema de alarma por distancia</h1>
+<p>Simula la distancia y observa cómo reacciona el sistema</p>
+
+<div class="container">
+
+<div class="box">
+<h3>Sensor (Ultrasónico)</h3>
+<input type="range" min="0" max="100" value="50" id="slider">
+<p>Distancia: <span id="dist">50</span> cm</p>
+</div>
+
+<div class="box">
+<h3>Umbral</h3>
+<p>Activación: <b>30 cm</b></p>
+</div>
+
+<div class="box">
+<h3>Alarma</h3>
+<div class="led" id="led"></div>
+<div class="alerta" id="estado">Sistema seguro</div>
+</div>
+
+</div>
+
+<h3 id="pregunta"></h3>
+<div id="opciones"></div>
+
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+// ===== SONIDO =====
+let ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(){
+let osc = ctx.createOscillator();
+osc.connect(ctx.destination);
+osc.frequency.value = 800;
+osc.start();
+setTimeout(()=>osc.stop(),150);
+}
+
+// ===== SIMULACIÓN =====
+setInterval(()=>{
+
+let d = parseInt(slider.value)
+dist.innerText = d
+
+if(d < 30){
+led.style.background="red"
+led.style.animation="blink 0.5s infinite"
+estado.innerText="🚨 Alarma activada"
+beep()
+}else{
+led.style.background="green"
+led.style.animation="none"
+estado.innerText="Sistema seguro"
+}
+
+},500)
+
+// ===== PREGUNTAS (variadas) =====
+let preguntas=[
+{
+q:"Antes, ¿qué sensor utilizábamos?",
+o:["Ultrasónico","Botón","LDR (luz)"],
+c:2,
+exp:"Antes trabajábamos con un sensor de luz (LDR)"
+},
+{
+q:"¿Qué mide ahora el sensor ultrasónico?",
+o:["Temperatura","Distancia","Voltaje"],
+c:1,
+exp:"El sensor ultrasónico mide distancia"
+},
+{
+q:"¿Qué es un umbral?",
+o:["Un cable","Un error","Un valor límite"],
+c:2,
+exp:"El umbral define cuándo activar el sistema"
+},
+{
+q:"¿Cuándo se activa la alarma?",
+o:["Siempre","Cuando la distancia es menor al umbral","Cuando es mayor"],
+c:1,
+exp:"Se activa cuando el objeto está cerca"
+},
+{
+q:"¿Qué hace el sistema automáticamente?",
+o:["Solo muestra datos","No hace nada","Detecta y responde"],
+c:2,
+exp:"El sistema detecta el entorno y actúa automáticamente"
+}
+]
+
+let actual=0, puntos=0, bloqueado=false
+
+function cargar(){
+if(actual>=preguntas.length){mostrarFinal();return}
+let p=preguntas[actual]
+pregunta.innerText=p.q
+let html=""
+p.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="responder(${i})">${op}</div>`
+})
+opciones.innerHTML=html
+bloqueado=false
+}
+
+function responder(i){
+if(bloqueado) return
+bloqueado=true
+
+let p=preguntas[actual]
+
+document.querySelectorAll(".option").forEach(op=>{
+op.style.pointerEvents="none"
+})
+
+if(i===p.c){
+puntos++
+feedback.innerHTML="✅ "+p.exp
+}else{
+feedback.innerHTML="❌ "+p.exp
+}
+
+actual++
+
+if(actual>=preguntas.length){
+setTimeout(mostrarFinal,800)
+return
+}
+
+setTimeout(()=>{
+feedback.innerHTML=""
+cargar()
+},1000)
+}
+
+// ===== FINAL GAMIFICADO =====
+function mostrarFinal(){
+
+pregunta.innerText=""
+opciones.innerHTML=""
+feedback.innerHTML=""
+
+let nota=Math.round((puntos/preguntas.length)*20)
+
+let medalla="🥉"
+let mensaje="Sigue practicando"
+let color="#cd7f32"
+
+if(nota>=18){
+medalla="🥇"
+mensaje="¡Excelente!"
+color="#ffd700"
+}
+else if(nota>=14){
+medalla="🥈"
+mensaje="Buen trabajo"
+color="#c0c0c0"
+}
+
+let ancho=(nota/20)*100
+
+final.style.display="block"
+
+final.innerHTML=
+"<h2>🎮 Resultado final</h2>"+
+"<div style='font-size:60px'>"+medalla+"</div>"+
+"<p><b>Puntaje:</b> "+puntos+" / "+preguntas.length+"</p>"+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<div style='width:80%;height:20px;background:#ddd;margin:auto;border-radius:10px'>"+
+"<div style='width:"+ancho+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<p><b>💡 Antes detectaban luz… ahora detectarán distancia</b></p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>"
+
+// confeti
+if(nota>=18){
+for(let i=0;i<30;i++){
+let c=document.createElement("div")
+c.innerText="🎉"
+c.style.position="fixed"
+c.style.left=Math.random()*100+"%"
+c.style.top="-20px"
+c.style.animation="caer 2s linear forwards"
+document.body.appendChild(c)
+}
+}
+
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>
