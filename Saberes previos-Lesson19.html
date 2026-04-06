@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Control de servomotor</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.container{
+display:flex;
+justify-content:center;
+gap:40px;
+margin:30px;
+flex-wrap:wrap;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+padding:15px;
+width:240px;
+}
+
+.servo{
+width:100px;
+height:100px;
+margin:auto;
+position:relative;
+}
+
+.brazo{
+width:80px;
+height:6px;
+background:#2f5ea8;
+position:absolute;
+top:50%;
+left:50%;
+transform-origin:left center;
+transform:rotate(0deg);
+transition:0.3s;
+}
+
+button{
+margin:5px;
+padding:10px;
+background:#2f5ea8;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:350px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+#feedback{min-height:40px;margin-top:10px;}
+#final{display:none;margin-top:20px;}
+
+@keyframes caer{
+to{
+transform:translateY(100vh);
+opacity:0;
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Control de servomotor</h1>
+<p>Usa los botones para controlar la posición</p>
+
+<div class="container">
+
+<div class="box">
+<h3>Interfaz (HMI)</h3>
+<button onclick="mover(0)">0°</button>
+<button onclick="mover(90)">90°</button>
+<button onclick="mover(180)">180°</button>
+</div>
+
+<div class="box">
+<h3>Variable (ángulo)</h3>
+<p id="angulo">0°</p>
+</div>
+
+<div class="box">
+<h3>Servo</h3>
+<div class="servo">
+<div class="brazo" id="brazo"></div>
+</div>
+</div>
+
+</div>
+
+<h3 id="pregunta"></h3>
+<div id="opciones"></div>
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+// ===== CONTROL SERVO =====
+function mover(a){
+document.getElementById("angulo").innerText = a + "°"
+document.getElementById("brazo").style.transform = `rotate(${a}deg)`
+}
+
+// ===== PREGUNTAS =====
+let preguntas=[
+{
+q:"Antes, ¿qué controlábamos con PWM?",
+o:["Posición","Brillo de LED","Sonido"],
+c:1,
+exp:"PWM controlaba la intensidad del LED"
+},
+{
+q:"¿Qué controlamos ahora con PWM?",
+o:["Voltaje","Posición","Temperatura"],
+c:1,
+exp:"Ahora controlamos el ángulo del servo"
+},
+{
+q:"¿Qué representa la variable?",
+o:["El ángulo","El cable","El sensor"],
+c:0,
+exp:"La variable guarda el ángulo del servo"
+},
+{
+q:"¿Qué función cumplen los botones?",
+o:["Sensor","Interfaz HMI","Alarma"],
+c:1,
+exp:"Los botones son una interfaz de control"
+},
+{
+q:"¿Qué permite la condición en un sistema?",
+o:["Nada","Decidir acciones","Encender todo"],
+c:1,
+exp:"Las condiciones permiten decisiones automáticas"
+}
+]
+
+let actual=0
+let puntos=0
+let bloqueado=false
+
+function cargar(){
+if(actual>=preguntas.length){
+mostrarFinal()
+return
+}
+
+let p=preguntas[actual]
+document.getElementById("pregunta").innerText=p.q
+
+let html=""
+p.o.forEach((op,i)=>{
+html+=`<div class="option" onclick="responder(${i})">${op}</div>`
+})
+
+document.getElementById("opciones").innerHTML=html
+bloqueado=false
+}
+
+function responder(i){
+
+if(bloqueado) return
+bloqueado=true
+
+let p=preguntas[actual]
+
+document.querySelectorAll(".option").forEach(op=>{
+op.style.pointerEvents="none"
+})
+
+if(i===p.c){
+puntos++
+document.getElementById("feedback").innerHTML="✅ "+p.exp
+}else{
+document.getElementById("feedback").innerHTML="❌ "+p.exp
+}
+
+actual++
+
+if(actual>=preguntas.length){
+setTimeout(mostrarFinal,800)
+return
+}
+
+setTimeout(()=>{
+document.getElementById("feedback").innerHTML=""
+cargar()
+},1000)
+}
+
+// ===== FINAL GAMIFICADO =====
+function mostrarFinal(){
+
+document.getElementById("pregunta").innerText=""
+document.getElementById("opciones").innerHTML=""
+document.getElementById("feedback").innerHTML=""
+
+let nota=Math.round((puntos/preguntas.length)*20)
+
+let medalla="🥉"
+let mensaje="Sigue practicando"
+let color="#cd7f32"
+
+if(nota>=18){
+medalla="🥇"
+mensaje="¡Excelente dominio!"
+color="#ffd700"
+}
+else if(nota>=14){
+medalla="🥈"
+mensaje="Buen trabajo"
+color="#c0c0c0"
+}
+
+let ancho=(nota/20)*100
+
+let finalDiv=document.getElementById("final")
+finalDiv.style.display="block"
+
+finalDiv.innerHTML=
+"<h2>🎮 Resultado final</h2>"+
+"<div style='font-size:60px'>"+medalla+"</div>"+
+"<p><b>Puntaje:</b> "+puntos+" / "+preguntas.length+"</p>"+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<div style='width:80%;height:20px;background:#ddd;margin:auto;border-radius:10px'>"+
+"<div style='width:"+ancho+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<p><b>💡 Antes controlaban intensidad… ahora controlan posición</b></p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>"
+
+// 🎉 confeti
+if(nota>=18){
+for(let i=0;i<30;i++){
+let c=document.createElement("div")
+c.innerText="🎉"
+c.style.position="fixed"
+c.style.left=Math.random()*100+"%"
+c.style.top="-20px"
+c.style.animation="caer 2s linear forwards"
+document.body.appendChild(c)
+}
+}
+
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>
