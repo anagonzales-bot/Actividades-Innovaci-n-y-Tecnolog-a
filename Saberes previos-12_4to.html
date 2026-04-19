@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FSM - Robot inteligente</title>
+
+<style>
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+}
+
+h1{color:#1b3c6b;}
+
+.container{
+display:flex;
+justify-content:center;
+gap:40px;
+flex-wrap:wrap;
+margin:20px;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:10px;
+padding:15px;
+width:250px;
+}
+
+.estado{
+font-size:22px;
+font-weight:bold;
+}
+
+.led{
+width:60px;height:60px;border-radius:50%;
+margin:auto;
+background:black;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:10px;
+width:380px;
+background:#2f5ea8;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.timer{
+font-weight:bold;
+color:#1b3c6b;
+}
+
+#feedback{min-height:40px;}
+#final{display:none;margin-top:20px;}
+
+@keyframes blink{
+0%{opacity:1}
+50%{opacity:0.2}
+100%{opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<h1>🤖 Máquina de Estados (FSM)</h1>
+<p class="timer">⏱ Tiempo: <span id="tiempo">0</span>s</p>
+
+<div class="container">
+
+<div class="box">
+<h3>Sensor</h3>
+<input type="range" min="0" max="100" value="70" id="sensor">
+<p><span id="valor">70</span> cm</p>
+</div>
+
+<div class="box">
+<h3>Estado</h3>
+<p class="estado" id="estado">SEGURO</p>
+</div>
+
+<div class="box">
+<h3>Actuadores</h3>
+<div class="led" id="led"></div>
+<p id="buzzer">🔇</p>
+</div>
+
+</div>
+
+<h3 id="pregunta"></h3>
+<div id="opciones"></div>
+<div id="feedback"></div>
+<div id="final"></div>
+
+<script>
+
+// ===== TIMER =====
+let tiempoTotal=0;
+let timer=setInterval(()=>{
+tiempoTotal++;
+document.getElementById("tiempo").innerText=tiempoTotal;
+},1000);
+
+// ===== FSM =====
+let estadoActual="SEGURO";
+
+setInterval(()=>{
+let d=parseInt(sensor.value)
+valor.innerText=d
+
+if(d<30){
+estadoActual="ALARMA"
+}
+else if(d<60){
+estadoActual="ALERTA"
+}
+else{
+estadoActual="SEGURO"
+}
+
+if(estadoActual==="SEGURO"){
+led.style.background="green"
+led.style.animation="none"
+buzzer.innerText="🔇"
+}
+else if(estadoActual==="ALERTA"){
+led.style.background="orange"
+led.style.animation="none"
+buzzer.innerText="🔇"
+}
+else{
+led.style.background="red"
+led.style.animation="blink 0.5s infinite"
+buzzer.innerText="🔊"
+}
+
+estado.innerText=estadoActual
+
+},400)
+
+// ===== MEZCLA =====
+function mezclar(a){return a.sort(()=>Math.random()-0.5)}
+
+// ===== PREGUNTAS =====
+let preguntas=[
+{
+q:"¿Qué define el comportamiento del sistema?",
+op:[
+{t:"El estado actual",c:true},
+{t:"El cableado",c:false},
+{t:"El voltaje",c:false}
+]
+},
+{
+q:"¿Qué provoca el cambio de estado?",
+op:[
+{t:"El sensor",c:true},
+{t:"El LED",c:false},
+{t:"El delay",c:false}
+]
+},
+{
+q:"¿Qué es una transición?",
+op:[
+{t:"Cambio entre estados",c:true},
+{t:"Un error",c:false},
+{t:"Un sensor",c:false}
+]
+},
+{
+q:"¿Qué ventaja tiene FSM?",
+op:[
+{t:"Organiza decisiones",c:true},
+{t:"Complica el sistema",c:false},
+{t:"Usa más memoria",c:false}
+]
+},
+{
+q:"¿Qué mejora frente a condicionales sueltas?",
+op:[
+{t:"Control centralizado",c:true},
+{t:"Más desorden",c:false},
+{t:"Más cables",c:false}
+]
+}
+]
+
+let actual=0
+let puntos=0
+let bloqueado=false
+
+function cargar(){
+if(actual>=preguntas.length){
+mostrarFinal()
+return
+}
+
+let p=preguntas[actual]
+document.getElementById("pregunta").innerText=p.q
+
+let ops=mezclar([...p.op])
+let html=""
+
+ops.forEach(o=>{
+html+=`<div class="option" onclick="responder(${o.c})">${o.t}</div>`
+})
+
+document.getElementById("opciones").innerHTML=html
+bloqueado=false
+}
+
+function responder(correcto){
+
+if(bloqueado)return
+bloqueado=true
+
+if(correcto){
+puntos++
+feedback.innerHTML="✅ Correcto"
+}else{
+feedback.innerHTML="❌ Incorrecto"
+}
+
+actual++
+
+if(actual>=preguntas.length){
+setTimeout(mostrarFinal,800)
+return
+}
+
+setTimeout(()=>{
+feedback.innerHTML=""
+cargar()
+},1000)
+}
+
+// ===== FINAL =====
+function mostrarFinal(){
+
+clearInterval(timer)
+
+document.getElementById("pregunta").innerText=""
+document.getElementById("opciones").innerHTML=""
+document.getElementById("feedback").innerHTML=""
+
+let nota=Math.round((puntos/preguntas.length)*20)
+
+// medallas
+let medalla="🥉"
+let color="#cd7f32"
+let mensaje="Sigue practicando"
+
+if(nota>=18){
+medalla="🥇"
+color="#ffd700"
+mensaje="¡Excelente dominio!"
+}
+else if(nota>=14){
+medalla="🥈"
+color="#c0c0c0"
+mensaje="Buen trabajo"
+}
+
+let ancho=(nota/20)*100
+
+let finalDiv=document.getElementById("final")
+finalDiv.style.display="block"
+
+finalDiv.innerHTML=
+"<h2>🎮 Resultado final</h2>"+
+"<div style='font-size:60px'>"+medalla+"</div>"+
+"<p><b>Puntaje:</b> "+puntos+" / "+preguntas.length+"</p>"+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+"<p><b>Tiempo:</b> "+tiempoTotal+" s</p>"+
+
+"<div style='width:80%;height:20px;background:#ddd;margin:auto;border-radius:10px'>"+
+"<div style='width:"+ancho+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<p><b>💡 El sistema decide según su estado</b></p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>"
+
+}
+
+cargar()
+
+</script>
+
+</body>
+</html>
