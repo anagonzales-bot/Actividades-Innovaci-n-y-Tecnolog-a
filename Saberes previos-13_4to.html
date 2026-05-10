@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>⚠️ delay() bloqueante</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#e8f1ff,#f4f8ff);
+text-align:center;
+overflow-x:hidden;
+margin:0;
+padding:20px;
+}
+
+h1{
+color:#1b3c6b;
+}
+
+.timer{
+font-size:20px;
+font-weight:bold;
+color:#1b3c6b;
+margin-bottom:20px;
+}
+
+.code{
+background:#111;
+color:#00ff88;
+padding:15px;
+width:320px;
+margin:auto;
+border-radius:10px;
+font-size:24px;
+margin-bottom:25px;
+}
+
+.container{
+display:flex;
+justify-content:center;
+gap:30px;
+flex-wrap:wrap;
+margin-bottom:20px;
+}
+
+.box{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:12px;
+padding:20px;
+width:240px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.sensor,
+.motor{
+font-size:60px;
+transition:0.3s;
+}
+
+.screen{
+background:#111;
+color:#00ff88;
+padding:15px;
+border-radius:10px;
+font-size:22px;
+height:45px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:12px;
+width:420px;
+background:#2f5ea8;
+color:white;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+font-size:16px;
+}
+
+.option:hover{
+background:#1b3c6b;
+transform:scale(1.02);
+}
+
+#feedback{
+min-height:80px;
+font-size:18px;
+margin-top:15px;
+}
+
+.progress{
+width:80%;
+height:20px;
+background:#ddd;
+margin:auto;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:20px;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:#2f5ea8;
+transition:0.4s;
+}
+
+#final{
+display:none;
+margin-top:25px;
+}
+
+.overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(255,0,0,0.18);
+display:none;
+align-items:center;
+justify-content:center;
+font-size:55px;
+font-weight:bold;
+color:red;
+z-index:999;
+backdrop-filter:blur(2px);
+}
+
+button{
+padding:12px 20px;
+font-size:16px;
+border:none;
+border-radius:8px;
+background:#2f5ea8;
+color:white;
+cursor:pointer;
+margin-top:20px;
+}
+
+button:hover{
+background:#1b3c6b;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="overlay" id="overlay">
+⛔ SISTEMA BLOQUEADO
+</div>
+
+<h1>⚠️ ¿Qué hace realmente delay()?</h1>
+
+<p class="timer">
+⏱ Tiempo: <span id="tiempo">0</span>s
+</p>
+
+<div class="code">
+delay(1000);
+</div>
+
+<div class="container">
+
+<div class="box">
+<h3>📡 Sensor</h3>
+<div class="sensor" id="sensor">📡</div>
+<p id="sensorText">Detectando...</p>
+</div>
+
+<div class="box">
+<h3>⚙️ Motor</h3>
+<div class="motor" id="motor">⚙️</div>
+<p id="motorText">Girando...</p>
+</div>
+
+<div class="box">
+<h3>🖥 Pantalla</h3>
+<div class="screen" id="screen">
+Dato: 0
+</div>
+</div>
+
+</div>
+
+<div class="progress">
+<div class="progress-bar" id="barra"></div>
+</div>
+
+<h3 id="pregunta"></h3>
+
+<div id="opciones"></div>
+
+<div id="feedback"></div>
+
+<div id="final"></div>
+
+<script>
+
+// ===== ELEMENTOS =====
+const sensor = document.getElementById("sensor");
+const motor = document.getElementById("motor");
+const screen = document.getElementById("screen");
+const sensorText = document.getElementById("sensorText");
+const motorText = document.getElementById("motorText");
+const overlay = document.getElementById("overlay");
+const feedback = document.getElementById("feedback");
+const barra = document.getElementById("barra");
+const pregunta = document.getElementById("pregunta");
+const opcionesDiv = document.getElementById("opciones");
+const finalDiv = document.getElementById("final");
+
+// ===== VARIABLES =====
+let sistemaBloqueado=false;
+let tiempoTotal=0;
+let puntos=0;
+let actual=0;
+let pantallaValor=0;
+let sensorVisible=true;
+let rotacion=0;
+
+// ===== TIMER =====
+let timer=setInterval(()=>{
+
+if(!sistemaBloqueado){
+tiempoTotal++;
+document.getElementById("tiempo").innerText=tiempoTotal;
+}
+
+},1000);
+
+// ===== SIMULACIÓN =====
+setInterval(()=>{
+
+if(sistemaBloqueado)return;
+
+// SENSOR PARPADEA
+sensorVisible=!sensorVisible;
+sensor.style.opacity=sensorVisible ? "1" : "0.3";
+
+// MOTOR GIRA
+rotacion += 20;
+motor.style.transform=`rotate(${rotacion}deg)`;
+
+// PANTALLA CAMBIA DATOS
+pantallaValor=Math.floor(Math.random()*100);
+screen.innerText="Dato: "+pantallaValor;
+
+},300);
+
+// ===== MEZCLAR =====
+function mezclar(a){
+return a.sort(()=>Math.random()-0.5);
+}
+
+// ===== PREGUNTAS =====
+let preguntas=[
+
+{
+q:"¿Qué ocurre durante delay(1000)?",
+op:[
+{t:"Todo sigue funcionando",c:false},
+{t:"El sistema se detiene temporalmente",c:true},
+{t:"Solo se apaga el LED",c:false}
+],
+exp:"delay() pausa toda la ejecución"
+},
+
+{
+q:"¿Qué ocurre con el sensor?",
+op:[
+{t:"Sigue detectando",c:false},
+{t:"Deja de actualizarse",c:true},
+{t:"Detecta más rápido",c:false}
+],
+exp:"Los sensores dejan de responder"
+},
+
+{
+q:"¿Qué ocurre con el motor?",
+op:[
+{t:"Se detiene temporalmente",c:true},
+{t:"Aumenta velocidad",c:false},
+{t:"No cambia",c:false}
+],
+exp:"Los actuadores dejan de reaccionar"
+},
+
+{
+q:"¿Qué ocurre con la pantalla?",
+op:[
+{t:"Queda congelada",c:true},
+{t:"Se actualiza normal",c:false},
+{t:"Se reinicia",c:false}
+],
+exp:"La interfaz también se bloquea"
+},
+
+{
+q:"¿Cuál es el verdadero problema?",
+op:[
+{t:"La programación bloqueante",c:true},
+{t:"El sensor",c:false},
+{t:"El hardware",c:false}
+],
+exp:"delay() bloquea todo el sistema"
+}
+
+];
+
+// ===== CARGAR PREGUNTA =====
+function cargar(){
+
+if(actual>=preguntas.length){
+final();
+return;
+}
+
+let p=preguntas[actual];
+
+pregunta.innerText=p.q;
+
+let opciones=mezclar([...p.op]);
+
+let html="";
+
+opciones.forEach(o=>{
+
+html += `
+<div class="option"
+onclick="responder(${o.c},'${p.exp}')">
+${o.t}
+</div>
+`;
+
+});
+
+opcionesDiv.innerHTML=html;
+
+barra.style.width=
+((actual/preguntas.length)*100)+"%";
+
+}
+
+// ===== RESPONDER =====
+function responder(correcta,exp){
+
+// ===== BLOQUEO =====
+sistemaBloqueado=true;
+
+// OVERLAY
+overlay.style.display="flex";
+
+// SENSOR
+sensor.style.opacity="0.2";
+sensorText.innerText="⛔ Sensor detenido";
+
+// MOTOR
+motorText.innerText="⛔ Motor detenido";
+
+// PANTALLA
+screen.innerText="⛔ BLOQUEADO";
+screen.style.color="red";
+
+// FEEDBACK
+if(correcta){
+puntos++;
+feedback.innerHTML="✅ "+exp;
+}
+else{
+feedback.innerHTML="❌ "+exp;
+}
+
+// ===== CUENTA BLOQUEO =====
+let restante=5;
+
+feedback.innerHTML +=
+"<br><br><b>⏳ Sistema bloqueado: <span id='contadorDelay'>5</span>s</b>";
+
+let cuenta=setInterval(()=>{
+
+restante--;
+
+let contador=document.getElementById("contadorDelay");
+
+if(contador){
+contador.innerText=restante;
+}
+
+if(restante<=0){
+
+clearInterval(cuenta);
+
+// ===== REANUDAR =====
+sistemaBloqueado=false;
+
+// OVERLAY
+overlay.style.display="none";
+
+// SENSOR
+sensor.style.opacity="1";
+sensorText.innerText="Detectando...";
+
+// MOTOR
+motorText.innerText="Girando...";
+
+// PANTALLA
+screen.style.color="#00ff88";
+
+// MENSAJE
+feedback.innerHTML=
+"🟢 El sistema vuelve a funcionar durante 3 segundos";
+
+// ===== OBSERVAR FUNCIONAMIENTO =====
+setTimeout(()=>{
+
+feedback.innerHTML="";
+
+actual++;
+
+cargar();
+
+},3000);
+
+}
+
+},1000);
+
+}
+
+// ===== FINAL =====
+function final(){
+
+clearInterval(timer);
+
+barra.style.width="100%";
+
+pregunta.innerText="";
+opcionesDiv.innerHTML="";
+feedback.innerHTML="";
+
+let nota=
+Math.round((puntos/preguntas.length)*20);
+
+let medalla="🥉";
+let color="#cd7f32";
+let mensaje="Debes revisar sistemas bloqueantes";
+
+if(nota>=18){
+medalla="🥇";
+color="#ffd700";
+mensaje="¡Excelente comprensión!";
+}
+else if(nota>=14){
+medalla="🥈";
+color="#c0c0c0";
+mensaje="Buen análisis";
+}
+
+let ancho=(nota/20)*100;
+
+finalDiv.style.display="block";
+
+finalDiv.innerHTML=
+
+"<h2>🎮 Resultado Final</h2>"+
+
+"<div style='font-size:70px'>"+medalla+"</div>"+
+
+"<p><b>Puntaje:</b> "+puntos+
+" / "+preguntas.length+"</p>"+
+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<p><b>Tiempo:</b> "+tiempoTotal+" s</p>"+
+
+"<div style='width:80%;height:22px;background:#ddd;margin:auto;border-radius:12px'>"+
+"<div style='width:"+ancho+
+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<h3>💥 Conclusión</h3>"+
+
+"<p><b>delay()</b> bloquea TODO el sistema.</p>"+
+
+"<p>📡 Sensores dejan de responder</p>"+
+"<p>⚙️ Actuadores dejan de reaccionar</p>"+
+"<p>🖥 Pantallas dejan de actualizarse</p>"+
+
+"<h3>🚀 Ahora evolucionaremos a programación NO bloqueante</h3>"+
+
+"<button onclick='location.reload()'>Reintentar</button>";
+
+}
+
+// ===== INICIAR =====
+cargar();
+
+</script>
+
+</body>
+</html>
