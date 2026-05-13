@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>⚡ PWM y Control Inteligente</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#eef5ff,#dfefff);
+text-align:center;
+margin:0;
+padding:20px;
+overflow-x:hidden;
+}
+
+h1{
+color:#123d7a;
+}
+
+.subtitle{
+font-size:18px;
+max-width:900px;
+margin:auto;
+line-height:1.5;
+margin-bottom:20px;
+}
+
+.timer{
+font-size:20px;
+font-weight:bold;
+margin-bottom:20px;
+color:#123d7a;
+}
+
+.code{
+background:#111;
+color:#00ff88;
+padding:15px;
+border-radius:12px;
+width:340px;
+margin:auto;
+font-size:24px;
+margin-bottom:25px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.container{
+display:flex;
+justify-content:center;
+gap:30px;
+flex-wrap:wrap;
+margin-bottom:20px;
+}
+
+.card{
+background:white;
+border:2px solid #2f5ea8;
+border-radius:14px;
+padding:20px;
+width:260px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.motor{
+font-size:70px;
+transition:0.05s linear;
+}
+
+.screen{
+background:#111;
+color:#00ff88;
+padding:15px;
+border-radius:10px;
+height:45px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:22px;
+margin-bottom:10px;
+}
+
+.bar{
+width:100%;
+height:25px;
+background:#ddd;
+border-radius:12px;
+overflow:hidden;
+margin-top:10px;
+}
+
+.fill{
+height:100%;
+width:100%;
+background:limegreen;
+transition:0.2s;
+}
+
+.option{
+display:block;
+margin:10px auto;
+padding:12px;
+width:460px;
+max-width:90%;
+background:#2f5ea8;
+color:white;
+border-radius:8px;
+cursor:pointer;
+transition:0.2s;
+font-size:16px;
+}
+
+.option:hover{
+background:#16396b;
+transform:scale(1.02);
+}
+
+.progress{
+width:80%;
+height:22px;
+background:#ddd;
+margin:auto;
+border-radius:12px;
+overflow:hidden;
+margin-bottom:20px;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:#2f5ea8;
+transition:0.3s;
+}
+
+#feedback{
+min-height:70px;
+font-size:18px;
+margin-top:15px;
+font-weight:bold;
+}
+
+#final{
+display:none;
+margin-top:30px;
+}
+
+.overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(255,140,0,0.08);
+display:none;
+align-items:center;
+justify-content:center;
+font-size:55px;
+font-weight:bold;
+color:#ff6600;
+z-index:999;
+backdrop-filter:blur(2px);
+pointer-events:none;
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:10px;
+background:#2f5ea8;
+color:white;
+font-size:16px;
+cursor:pointer;
+margin-top:20px;
+}
+
+button:hover{
+background:#16396b;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="overlay" id="overlay">
+⚠️ POTENCIA BRUSCA
+</div>
+
+<h1>⚡ PWM y Control Inteligente</h1>
+
+<p class="subtitle">
+
+Imagina un motor industrial recibiendo toda la potencia de golpe.
+
+<br><br>
+
+⚠️ Algunos motores vibran, hacen ruido o sufren desgaste.
+
+<br><br>
+
+👉 Los sistemas modernos controlan potencia gradualmente usando PWM.
+
+</p>
+
+<p class="timer">
+⏱ Tiempo: <span id="tiempo">0</span>s
+</p>
+
+<div class="code">
+analogWrite(ENA, 255);
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<h3>⚙️ Motor</h3>
+
+<div class="motor" id="motor">
+⚙️
+</div>
+
+<p id="motorText">
+Velocidad máxima
+</p>
+
+</div>
+
+<div class="card">
+
+<h3>📊 Potencia PWM</h3>
+
+<div class="screen" id="screen">
+255 / 255
+</div>
+
+<div class="bar">
+<div class="fill" id="fill"></div>
+</div>
+
+<p id="powerText">
+100% potencia
+</p>
+
+</div>
+
+<div class="card">
+
+<h3>🔊 Estado</h3>
+
+<div class="screen" id="stateScreen">
+VIBRANDO
+</div>
+
+<p id="stateText">
+⚠️ Cambio brusco de energía
+</p>
+
+</div>
+
+</div>
+
+<div class="progress">
+<div class="progress-bar" id="barra"></div>
+</div>
+
+<h2 id="pregunta"></h2>
+
+<div id="opciones"></div>
+
+<div id="feedback"></div>
+
+<div id="final"></div>
+
+<script>
+
+// ===== ELEMENTOS =====
+const motor = document.getElementById("motor");
+const screen = document.getElementById("screen");
+const fill = document.getElementById("fill");
+const powerText = document.getElementById("powerText");
+const stateScreen = document.getElementById("stateScreen");
+const stateText = document.getElementById("stateText");
+const overlay = document.getElementById("overlay");
+const pregunta = document.getElementById("pregunta");
+const opcionesDiv = document.getElementById("opciones");
+const feedback = document.getElementById("feedback");
+const barra = document.getElementById("barra");
+const finalDiv = document.getElementById("final");
+
+// ===== VARIABLES =====
+let tiempo=0;
+let puntos=0;
+let actual=0;
+let velocidad=255;
+let rotacion=0;
+let modoBrusco=true;
+
+// ===== TIMER =====
+setInterval(()=>{
+
+tiempo++;
+
+document.getElementById("tiempo").innerText=tiempo;
+
+},1000);
+
+// ===== ANIMACIÓN MOTOR =====
+setInterval(()=>{
+
+rotacion += velocidad/20;
+
+motor.style.transform=
+`rotate(${rotacion}deg)`;
+
+// MODO BRUSCO
+if(modoBrusco){
+
+motor.style.transform +=
+` translate(${Math.random()*4-2}px,${Math.random()*4-2}px)`;
+
+stateScreen.innerText="VIBRANDO";
+
+stateText.innerText=
+"⚠️ Cambio brusco de energía";
+
+}
+else{
+
+stateScreen.innerText="PWM SUAVE";
+
+stateText.innerText=
+"✅ Control gradual";
+
+}
+
+},60);
+
+// ===== MEZCLAR =====
+function mezclar(a){
+
+return a.sort(()=>Math.random()-0.5);
+
+}
+
+// ===== PREGUNTAS =====
+let preguntas=[
+
+{
+q:"¿Qué ocurre si el motor recibe toda la potencia de golpe?",
+op:[
+{t:"Puede vibrar o sufrir desgaste",c:true},
+{t:"Funciona mejor siempre",c:false},
+{t:"No cambia nada",c:false}
+],
+exp:"Los cambios bruscos afectan estabilidad"
+},
+
+{
+q:"¿Por qué algunos motores hacen ruido?",
+op:[
+{t:"Por variaciones bruscas de energía",c:true},
+{t:"Porque giran demasiado lento",c:false},
+{t:"Porque no usan sensores",c:false}
+],
+exp:"El motor recibe impulsos bruscos"
+},
+
+{
+q:"¿Qué permite el PWM?",
+op:[
+{t:"Controlar velocidad gradualmente",c:true},
+{t:"Apagar el motor",c:false},
+{t:"Eliminar sensores",c:false}
+],
+exp:"PWM regula energía enviada"
+},
+
+{
+q:"¿Qué hacen los sistemas profesionales?",
+op:[
+{t:"Usan siempre máxima potencia",c:false},
+{t:"Controlan potencia gradualmente",c:true},
+{t:"Desactivan PWM",c:false}
+],
+exp:"El control suave protege motores"
+},
+
+{
+q:"¿Qué mejora un PWM de alta resolución?",
+op:[
+{t:"La cantidad de cables",c:false},
+{t:"Precisión del control",c:true},
+{t:"El tamaño del motor",c:false}
+],
+exp:"Más resolución = control más fino"
+}
+
+];
+
+// ===== CARGAR =====
+function cargar(){
+
+if(actual>=preguntas.length){
+
+final();
+
+return;
+
+}
+
+let p=preguntas[actual];
+
+pregunta.innerText=p.q;
+
+let opciones=mezclar([...p.op]);
+
+let html="";
+
+opciones.forEach(o=>{
+
+html += `
+<div class="option"
+onclick="responder(${o.c},'${p.exp}')">
+${o.t}
+</div>
+`;
+
+});
+
+opcionesDiv.innerHTML=html;
+
+barra.style.width=
+((actual/preguntas.length)*100)+"%";
+
+}
+
+// ===== RESPONDER =====
+function responder(correcta,exp){
+
+overlay.style.display="flex";
+
+setTimeout(()=>{
+
+overlay.style.display="none";
+
+},1000);
+
+feedback.innerHTML=
+"⚡ Simulando control PWM gradual...";
+
+modoBrusco=false;
+
+let pwm=255;
+
+let suavizado=setInterval(()=>{
+
+pwm -= 15;
+
+if(pwm<80){
+
+pwm=80;
+
+}
+
+velocidad=pwm;
+
+screen.innerText=pwm+" / 255";
+
+fill.style.width=(pwm/255)*100+"%";
+
+powerText.innerText=
+Math.round((pwm/255)*100)+"% potencia";
+
+if(pwm<=80){
+
+clearInterval(suavizado);
+
+if(correcta){
+
+puntos++;
+
+feedback.innerHTML="✅ "+exp;
+
+}
+else{
+
+feedback.innerHTML="❌ "+exp;
+
+}
+
+setTimeout(()=>{
+
+modoBrusco=true;
+
+velocidad=255;
+
+screen.innerText="255 / 255";
+
+fill.style.width="100%";
+
+powerText.innerText="100% potencia";
+
+feedback.innerHTML="";
+
+actual++;
+
+cargar();
+
+},3000);
+
+}
+
+},120);
+
+}
+
+// ===== FINAL =====
+function final(){
+
+pregunta.innerText="";
+
+opcionesDiv.innerHTML="";
+
+feedback.innerHTML="";
+
+barra.style.width="100%";
+
+let nota=
+Math.round((puntos/preguntas.length)*20);
+
+let medalla="🥉";
+
+let color="#cd7f32";
+
+let mensaje="Debes revisar PWM";
+
+if(nota>=18){
+
+medalla="🥇";
+
+color="#ffd700";
+
+mensaje="¡Excelente comprensión!";
+
+}
+else if(nota>=14){
+
+medalla="🥈";
+
+color="#c0c0c0";
+
+mensaje="Buen análisis";
+
+}
+
+let ancho=(nota/20)*100;
+
+finalDiv.style.display="block";
+
+finalDiv.innerHTML=
+
+"<h2>🎮 Resultado Final</h2>"+
+
+"<div style='font-size:70px'>"+medalla+"</div>"+
+
+"<p><b>Puntaje:</b> "+puntos+
+" / "+preguntas.length+"</p>"+
+
+"<p><b>Nota:</b> "+nota+"/20</p>"+
+
+"<p><b>Tiempo:</b> "+tiempo+" segundos</p>"+
+
+"<div style='width:80%;height:22px;background:#ddd;margin:auto;border-radius:12px'>"+
+"<div style='width:"+ancho+
+"%;height:100%;background:"+color+"'></div>"+
+"</div>"+
+
+"<p>"+mensaje+"</p>"+
+
+"<h3>💥 Conclusión</h3>"+
+
+"<p>⚡ Los motores NO deben recibir cambios bruscos.</p>"+
+
+"<p>🎛 PWM controla energía gradualmente.</p>"+
+
+"<p>🔧 Los sistemas modernos usan alta resolución.</p>"+
+
+"<p>🚀 Ahora evolucionaremos a control profesional de motores.</p>"+
+
+"<button onclick='location.reload()'>Reintentar</button>";
+
+}
+
+// ===== INICIAR =====
+cargar();
+
+</script>
+
+</body>
+</html>
